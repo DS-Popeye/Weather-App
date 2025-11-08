@@ -4,27 +4,25 @@ import Layout from "./components/layout";
 import { ThemeProvider } from "./context/theme-provider";
 import WeatherDashboard from "./pages/weatherDashboard";
 import CityPage from "./pages/city-page";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-import {
- 
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+
 // Create a client
 const queryClient = new QueryClient({
-  defaultOptions :{
-    queries:{
-      staleTime:5*60*1000,
-      gcTime:10*60*1000,
-      retry:false,
-      refetchOnWindowFocus:false
-    }
-  }
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
 });
 
 function App() {
+
   return (
     <>
       <QueryClientProvider client={queryClient}>
@@ -39,8 +37,10 @@ function App() {
             <Toaster richColors />
           </ThemeProvider>
         </BrowserRouter>
-           <ReactQueryDevtools initialIsOpen={false} />
+
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
+
     </>
   );
 }

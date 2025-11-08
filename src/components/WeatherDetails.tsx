@@ -1,26 +1,27 @@
-// WeatherDetails.tsx
+// src/components/WeatherDetails.tsx
 import type { WeatherData, AQIData } from '@/api/types';
 import { format } from "date-fns";
 import { Compass, Gauge, Sunrise, Sunset } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import AQICard from "@/components/AQICard";
 
 interface WeatherDetailsProps {
   data: WeatherData;
-  aqi?: AQIData;
+  aqi?: AQIData | null;
 }
 
 const WeatherDetails = ({ data, aqi }: WeatherDetailsProps) => {
   const { wind, main, sys } = data;
 
   const formatTime = (timestamp: number) => format(new Date(timestamp * 1000), "h:mm a");
-  
+
   const getWindDirection = (degree: number) => {
     const directions = ["N","NE","E","SE","S","SW","W","NW"];
     return directions[Math.round(((degree %= 360) < 0 ? degree + 360 : degree) / 45) % 8];
   };
 
   const getAQICategory = (aqi: number) => {
-    switch (aqi) {
+    switch(aqi) {
       case 1: return "Good";
       case 2: return "Fair";
       case 3: return "Moderate";
@@ -36,22 +37,20 @@ const WeatherDetails = ({ data, aqi }: WeatherDetailsProps) => {
     { title: "Wind Direction", value: `${getWindDirection(wind.deg)} (${wind.deg}°)`, icon: Compass, color: "text-green-500" },
     { title: "Pressure", value: `${main.pressure} hPa`, icon: Gauge, color: "text-purple-500" },
     { title: "Humidity", value: `${main.humidity} %`, icon: Gauge, color: "text-blue-500" },
-    { title: "Sea Level", value: `${main.sea_level} m`, icon: Gauge, color: "text-indigo-500" },
-    { title: "Ground Level", value: `${main.grnd_level} m`, icon: Gauge, color: "text-yellow-500" },
     { title: "Visibility", value: `${data.visibility / 1000} km`, icon: Gauge, color: "text-red-500" },
   ];
 
-  if (aqi) {
+  if(aqi) {
     details.push({
       title: "Air Quality",
       value: `${aqi.aqi} (${getAQICategory(aqi.aqi)})`,
       icon: Gauge,
-      color: "text-red-600",
+      color: "text-red-600"
     });
   }
 
   return (
-    <Card>
+    <Card className=" top-0">
       <CardHeader>
         <CardTitle>Weather Details</CardTitle>
       </CardHeader>
@@ -67,6 +66,12 @@ const WeatherDetails = ({ data, aqi }: WeatherDetailsProps) => {
             </div>
           ))}
         </div>
+
+              {aqi && (
+        <div className="mt-4">
+          <AQICard aqiData={aqi} />
+        </div>
+      )}
       </CardContent>
     </Card>
   );

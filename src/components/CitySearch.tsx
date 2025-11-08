@@ -21,7 +21,7 @@ const CitySearch = () => {
   const [query, setQuery] = useState("");
   const { data: locations, isLoading } = useLocationSearch(query);
   const navigate = useNavigate();
-  console.log(locations);
+  // console.log(locations);
   const { favorites } = useFavorites();
   const { history, addToHistory, clearHistory } = useSearchHistory();
 

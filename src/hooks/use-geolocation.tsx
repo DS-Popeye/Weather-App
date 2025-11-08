@@ -14,9 +14,9 @@ export function useGeolocation() {
     isLoading: true,
   });
 
-  const fetchIpLocation = async () => {
+  const fetchIPLocation = async () => {
     try {
-      const res = await fetch("https://ipapi.co/json/"); // fallback IP location API
+      const res = await fetch("https://ipapi.co/json/");
       const data = await res.json();
       setLocationData({
         coordinates: { lat: data.latitude, lon: data.longitude },
@@ -26,24 +26,23 @@ export function useGeolocation() {
     } catch (err) {
       setLocationData({
         coordinates: null,
-        error: "Unable to determine location from IP",
+        error: "Failed to get location via IP",
         isLoading: false,
       });
     }
   };
 
   const getLocation = () => {
-    setLocationData({ coordinates: null, error: null, isLoading: true });
+    setLocationData((prev) => ({ ...prev, isLoading: true, error: null }));
 
     if (!navigator.geolocation) {
-      // Browser doesn't support geolocation, fallback to IP
-      fetchIpLocation();
+      // No GPS → fallback to IP
+      fetchIPLocation();
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        // Success: use GPS coordinates
         setLocationData({
           coordinates: {
             lat: position.coords.latitude,
@@ -54,11 +53,14 @@ export function useGeolocation() {
         });
       },
       (error) => {
-        // If GPS fails, fallback to IP location
-        console.warn("GPS location failed, fallback to IP", error);
-        fetchIpLocation();
+        // GPS failed → fallback to IP
+        fetchIPLocation();
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      }
     );
   };
 
@@ -68,6 +70,6 @@ export function useGeolocation() {
 
   return {
     ...locationData,
-    getLocation, // manually refresh location if needed
+    getLocation,
   };
 }
