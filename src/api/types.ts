@@ -1,4 +1,4 @@
-
+// types.ts
 export interface Coordinates {
   lat: number;
   lon: number;
@@ -30,6 +30,9 @@ export interface WeatherData {
     temp_max: number;
     pressure: number;
     humidity: number;
+    sea_level: number;
+    grnd_level: number;
+    visibility: number;
   };
   wind: {
     speed: number;
@@ -58,4 +61,21 @@ export interface ForecastData {
     sunrise: number;
     sunset: number;
   };
+}
+
+export interface AQIComponents {
+  co: number;
+  no: number;
+  no2: number;
+  o3: number;
+  so2: number;
+  pm2_5: number;
+  pm10: number;
+  nh3: number;
+}
+
+export interface AQIData {
+  aqi: number; // 1-5 scale
+  components: AQIComponents;
+  dt: number;
 }
