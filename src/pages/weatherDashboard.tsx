@@ -1,3 +1,5 @@
+// WeatherDashboard.tsx
+import { useState, useEffect } from "react";
 import CurrentWeather from "@/components/currentWeather";
 import { FavoriteCities } from "@/components/FavoriteCityTablet";
 import HourlyTempreture from "@/components/hourly-tempreture";
@@ -13,16 +15,8 @@ import {
   useReverseGeocodeQuery,
   useWeatherQuery,
 } from "@/hooks/use-weather";
-
-import {
-  AlertTriangle,
-  MapPin,
-  
-  RefreshCw,
- 
-} from "lucide-react";
- 
- 
+import { AlertTriangle, MapPin, RefreshCw } from "lucide-react";
+import { weatherAPI } from "@/api/weather";
 
 const WeatherDashboard = () => {
   const {
@@ -32,72 +26,54 @@ const WeatherDashboard = () => {
     isLoading: locationLoading,
   } = useGeolocation();
 
-  // console.log(coordinates);
-
+  const [aqi, setAqi] = useState(null);
 
   const weatherQuery = useWeatherQuery(coordinates);
   const forecastQuery = useForecastQuery(coordinates);
   const locationQuery = useReverseGeocodeQuery(coordinates);
 
-  // console.log(locationQuery.data);
-  // console.log(weatherQuery.data);
-  // console.log(forecastQuery.data);
+  const { favorites } = useFavorites();
 
-  const {favorites}= useFavorites()
-
-  console.log(favorites);
-  
-
-  console.log(favorites);
   const handleRefresh = () => {
     getLocation();
     if (coordinates) {
       weatherQuery.refetch();
       locationQuery.refetch();
       forecastQuery.refetch();
-      //reload weather data
     }
   };
 
-  if (locationLoading) {
-    return <WeatherSkeleton />;
-  }
-  if (locationError) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Loaction Error</AlertTitle>
-        <AlertDescription className="flex flex-col gap-4">
-          <p>{locationError}</p>
-          Your Session has expired.Please login Again
-          <Button onClick={getLocation} variant={"outline"} className="w-fit">
-            {" "}
-            <MapPin className="mr-2 h-4 w-4" />
-            Enable Location{" "}
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // Fetch AQI after coordinates are ready
+  useEffect(() => {
+    if (!coordinates) return;
+    const fetchAQI = async () => {
+      try {
+        const data = await weatherAPI.getAirQuality(coordinates);
+        setAqi(data);
+      } catch (err) {
+        console.error("Failed to fetch AQI:", err);
+      }
+    };
+    fetchAQI();
+  }, [coordinates]);
 
-  if (!coordinates) {
+  if (locationLoading) return <WeatherSkeleton />;
+
+  if (locationError || !coordinates) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Loaction Error</AlertTitle>
+        <AlertTitle>Location Error</AlertTitle>
         <AlertDescription className="flex flex-col gap-4">
-          <p>Please enable location access to see your local weather</p>
-          Your Session has expired.Please login Again
-          <Button onClick={getLocation} variant={"outline"} className="w-fit">
-            {" "}
+          <p>{locationError || "Please enable location access."}</p>
+          <Button onClick={getLocation} variant="outline" className="w-fit">
             <MapPin className="mr-2 h-4 w-4" />
-            Enable Location{" "}
+            Enable Location
           </Button>
         </AlertDescription>
       </Alert>
     );
   }
-  const locationName = locationQuery.data?.[0];
 
   if (weatherQuery.error || forecastQuery.error) {
     return (
@@ -114,23 +90,22 @@ const WeatherDashboard = () => {
       </Alert>
     );
   }
-  if (!weatherQuery.data || !forecastQuery.data) {
-    return <WeatherSkeleton />;
-  }
+
+  if (!weatherQuery.data || !forecastQuery.data) return <WeatherSkeleton />;
+
+  const locationName = locationQuery.data?.[0];
 
   return (
     <div className="space-y-4">
       <FavoriteCities />
-      <div>{/*  favourite cities */}</div>
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold tracking-tight">My Location</h1>
         <Button
-          variant={"outline"}
-          size={"icon"}
+          variant="outline"
+          size="icon"
           onClick={handleRefresh}
           disabled={weatherQuery.isFetching || forecastQuery.isFetching}
         >
-          {" "}
           <RefreshCw
             className={`h-4 w-4 ${
               weatherQuery.isFetching ? "animate-spin" : ""
@@ -138,21 +113,17 @@ const WeatherDashboard = () => {
           />
         </Button>
       </div>
-      {/* currenty and hourly weatherAPI */}
 
       <div className="grid gap-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6" >
-          <CurrentWeather
-            data={weatherQuery?.data}
-            locationName={locationName}
-          />
-
-          <HourlyTempreture data={forecastQuery?.data}
-              />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CurrentWeather data={weatherQuery.data} locationName={locationName} />
+          <HourlyTempreture data={forecastQuery.data} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 items-start">
-          <WeatherDetails data={weatherQuery?.data} />
-          <WeatherForecast  data={forecastQuery?.data }/>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-6">
+          {/* Pass AQI here */}
+          <WeatherDetails data={weatherQuery.data} aqi={aqi} />
+          <WeatherForecast data={forecastQuery.data} />
         </div>
       </div>
     </div>

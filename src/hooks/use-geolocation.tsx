@@ -14,20 +14,36 @@ export function useGeolocation() {
     isLoading: true,
   });
 
-  const getLocation = () => {
-    setLocationData((prev) => ({ ...prev, isLoading: true, error: null }));
-
-    if (!navigator.geolocation) {
+  const fetchIpLocation = async () => {
+    try {
+      const res = await fetch("https://ipapi.co/json/"); // fallback IP location API
+      const data = await res.json();
       setLocationData({
-        coordinates: null,
-        error: "Geolocation is not supported by your browser",
+        coordinates: { lat: data.latitude, lon: data.longitude },
+        error: null,
         isLoading: false,
       });
+    } catch (err) {
+      setLocationData({
+        coordinates: null,
+        error: "Unable to determine location from IP",
+        isLoading: false,
+      });
+    }
+  };
+
+  const getLocation = () => {
+    setLocationData({ coordinates: null, error: null, isLoading: true });
+
+    if (!navigator.geolocation) {
+      // Browser doesn't support geolocation, fallback to IP
+      fetchIpLocation();
       return;
     }
 
-    navigator.geolocation?.getCurrentPosition(
+    navigator.geolocation.getCurrentPosition(
       (position) => {
+        // Success: use GPS coordinates
         setLocationData({
           coordinates: {
             lat: position.coords.latitude,
@@ -38,44 +54,20 @@ export function useGeolocation() {
         });
       },
       (error) => {
-        let errorMessage: string;
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage =
-              "Location permission denied. Please enable location access.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Location request timed out.";
-            break;
-          default:
-            errorMessage = "An unknown error occurred.";
-        }
-
-        setLocationData({
-          coordinates: null,
-          error: errorMessage,
-          isLoading: false,
-        });
+        // If GPS fails, fallback to IP location
+        console.warn("GPS location failed, fallback to IP", error);
+        fetchIpLocation();
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
   };
 
-  // Get location on component mount
   useEffect(() => {
     getLocation();
   }, []);
 
   return {
     ...locationData,
-    getLocation, // Expose method to manually refresh location
+    getLocation, // manually refresh location if needed
   };
 }

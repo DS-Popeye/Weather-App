@@ -1,33 +1,48 @@
+// hourly-tempreture.tsx
 import type { ForecastData } from "@/api/types";
- 
 import {
   Card,
- 
   CardContent,
- 
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { format } from "date-fns";
-
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
 interface HourlyTempretureProps {
-  data: ForecastData;
+  data?: ForecastData | null; // optional, can be null before API response
 }
+
 const HourlyTempreture = ({ data }: HourlyTempretureProps) => {
-  const chartData = data?.list.slice(0, 8).map((item) => ({
-    time: format(new Date(item?.dt * 1000), "ha"),
+  if (!data || !data.list || data.list.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Today's Temperature</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground">
+            No data available.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const chartData = data.list.slice(0, 8).map((item) => ({
+    time: format(new Date(item.dt * 1000), "ha"),
     temp: Math.round(item.main.temp),
     feels_like: Math.round(item.main.feels_like),
   }));
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Today's Temperature</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] w-full">
-          <ResponsiveContainer width={"100%"} height={"100%"}>
+        <div className="h-[200px] w-full min-h-[200px] min-w-[0px]">
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <XAxis
                 dataKey="time"
@@ -36,15 +51,14 @@ const HourlyTempreture = ({ data }: HourlyTempretureProps) => {
                 tickLine={false}
                 axisLine={false}
               />
-                     <YAxis
+              <YAxis
                 stroke="#888888"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value}°`}
               />
-
-                   <Tooltip
+              <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
@@ -54,17 +68,13 @@ const HourlyTempreture = ({ data }: HourlyTempretureProps) => {
                             <span className="text-[0.70rem] uppercase text-muted-foreground">
                               Temperature
                             </span>
-                            <span className="font-bold">
-                              {payload[0].value}°
-                            </span>
+                            <span className="font-bold">{payload[0].value}°</span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">
                               Feels Like
                             </span>
-                            <span className="font-bold">
-                              {payload[1].value}°
-                            </span>
+                            <span className="font-bold">{payload[1].value}°</span>
                           </div>
                         </div>
                       </div>
@@ -73,7 +83,7 @@ const HourlyTempreture = ({ data }: HourlyTempretureProps) => {
                   return null;
                 }}
               />
-   <Line
+              <Line
                 type="monotone"
                 dataKey="temp"
                 stroke="#2563eb"
@@ -88,7 +98,6 @@ const HourlyTempreture = ({ data }: HourlyTempretureProps) => {
                 dot={false}
                 strokeDasharray="5 5"
               />
-
             </LineChart>
           </ResponsiveContainer>
         </div>
